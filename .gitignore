@@ -28,15 +28,7 @@ go.work.sum
 .env
 
 # local runtime data
-data/*
-!data/README.md
-!data/.gitkeep
-!data/postgres/
-!data/postgres/.gitkeep
-!data/redis/
-!data/redis/.gitkeep
-!data/bot/
-!data/bot/.gitkeep
+data/
 
 # Editor/IDE
 # .idea/

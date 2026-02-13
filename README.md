@@ -139,6 +139,7 @@ All runtime data is stored in `./data`:
 - `data/postgres`
 - `data/redis`
 - `data/bot`
+`./data` is runtime-only and is ignored by Git.
 For quick local testing compose sets `DEV_POLLING=true` by default.
 Set `DEV_POLLING=false` + `WEBHOOK_URL` for real webhook flow.
 
