@@ -22,6 +22,10 @@ Built on `gotgbot` updater/dispatcher, Redis, Postgres, AES-256-GCM envelope enc
 - Rate limit per user per chat in Redis (N/hour)
 - Structured logs (zerolog), `/healthz`, `/metrics`
 - No paywall/subscription logic; pure OSS behavior
+- Inline keyboard navigation in `/start` and `/help`
+- Access mode switch via env:
+  - `BOT_ACCESS_MODE=public`: all users/chats can use bot (RBAC still required for admin commands)
+  - `BOT_ACCESS_MODE=private`: only `ADMIN_USER_ID` updates are processed
 
 ## Repository Layout
 
@@ -42,6 +46,9 @@ Built on `gotgbot` updater/dispatcher, Redis, Postgres, AES-256-GCM envelope enc
 
 User:
 - `/help`
+- `/menu`
+- `/setup`
+- `/status`
 - `/ask <text>`
 - `/ai <preset> <text>`
 - `/ai_list`
@@ -69,6 +76,8 @@ docker run --name hyprbot-redis -p 6379:6379 -d redis:7
 
 ```fish
 set -x BOT_TOKEN "<telegram_bot_token>"
+set -x BOT_ACCESS_MODE private
+set -x ADMIN_USER_ID "<your_telegram_user_id>"
 set -x APP_MODE ALL
 set -x DEV_POLLING true
 
@@ -128,7 +137,9 @@ Health and metrics:
 ```fish
 # auto-generate ready .env with valid secrets
 ./scripts/init-env.sh
-# edit only BOT_TOKEN in .env
+# edit BOT_TOKEN and access fields in .env
+# BOT_ACCESS_MODE=private => set ADMIN_USER_ID
+# BOT_ACCESS_MODE=public  => ADMIN_USER_ID can stay 0
 
 docker compose up --build
 ```
@@ -142,6 +153,9 @@ All runtime data is stored in `./data`:
 `./data` is runtime-only and is ignored by Git.
 For quick local testing compose sets `DEV_POLLING=true` by default.
 Set `DEV_POLLING=false` + `WEBHOOK_URL` for real webhook flow.
+Access control:
+- `BOT_ACCESS_MODE=private`: only `ADMIN_USER_ID` can use the bot.
+- `BOT_ACCESS_MODE=public`: all users can use the bot and configure their own chat providers/presets (RBAC applies per chat).
 
 If `.env` already exists and you want to regenerate secrets:
 

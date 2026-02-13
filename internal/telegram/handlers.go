@@ -20,24 +20,7 @@ import (
 var providerNameRegex = regexp.MustCompile(`^[a-zA-Z0-9_-]{1,64}$`)
 
 func (s *Service) help(b *gotgbot.Bot, ctx *ext.Context) error {
-	text := strings.Join([]string{
-		"Commands:",
-		"/help",
-		"/ask <text>",
-		"/ai <preset> <text>",
-		"/ai_list",
-		"Admin:",
-		"/ai_preset_add <name> <provider> <model> <system_prompt...>",
-		"/ai_preset_del <name>",
-		"/ai_default <name>",
-		"/llm_add",
-		"/llm_list",
-		"/llm_del <name>",
-		"Private wizard:",
-		"/start llmadd_<chat_id>",
-		"/cancel",
-	}, "\n")
-	return s.reply(ctx, b, text)
+	return s.sendMainMenu(ctx, b)
 }
 
 func (s *Service) start(b *gotgbot.Bot, ctx *ext.Context) error {
@@ -52,7 +35,7 @@ func (s *Service) start(b *gotgbot.Bot, ctx *ext.Context) error {
 		}
 		return s.beginLLMAddWizard(ctx, b, chatID)
 	}
-	return s.help(b, ctx)
+	return s.sendMainMenu(ctx, b)
 }
 
 func (s *Service) cancelWizard(b *gotgbot.Bot, ctx *ext.Context) error {
@@ -262,8 +245,19 @@ func (s *Service) llmAdd(b *gotgbot.Bot, ctx *ext.Context) error {
 	if link == "" {
 		return s.reply(ctx, b, "Unable to generate deep-link. Check bot username.")
 	}
-
-	return s.reply(ctx, b, "Continue in private chat: "+link)
+	if ctx.EffectiveChat == nil {
+		return nil
+	}
+	_, err := b.SendMessage(ctx.EffectiveChat.Id, "Continue in private chat using the button below.", &gotgbot.SendMessageOpts{
+		ReplyMarkup: gotgbot.InlineKeyboardMarkup{
+			InlineKeyboard: [][]gotgbot.InlineKeyboardButton{
+				{
+					{Text: "Open private chat", Url: link},
+				},
+			},
+		},
+	})
+	return err
 }
 
 func (s *Service) llmList(b *gotgbot.Bot, ctx *ext.Context) error {

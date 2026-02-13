@@ -15,17 +15,24 @@ const (
 	ModeAll     = "ALL"
 	ModeWebhook = "WEBHOOK"
 	ModeWorker  = "WORKER"
+
+	AccessModePublic  = "public"
+	AccessModePrivate = "private"
 )
 
 var (
 	ErrMissingBotToken    = errors.New("BOT_TOKEN is required")
+	ErrMissingAdminUserID = errors.New("ADMIN_USER_ID is required and must be > 0")
+	ErrInvalidAccessMode  = errors.New("BOT_ACCESS_MODE must be 'public' or 'private'")
 	ErrMissingDatabaseDSN = errors.New("DB_DSN is required")
 	ErrMissingMasterKey   = errors.New("at least one master key is required")
 )
 
 type Config struct {
-	BotToken string
-	AppMode  string
+	BotToken      string
+	AppMode       string
+	BotAccessMode string
+	AdminUserID   int64
 
 	BotUsername string
 
@@ -96,9 +103,11 @@ type LogConfig struct {
 
 func Load() (*Config, error) {
 	cfg := &Config{
-		BotToken:   mustEnv("BOT_TOKEN", ""),
-		AppMode:    strings.ToUpper(mustEnv("APP_MODE", ModeAll)),
-		DevPolling: mustBool("DEV_POLLING", false),
+		BotToken:      mustEnv("BOT_TOKEN", ""),
+		AppMode:       strings.ToUpper(mustEnv("APP_MODE", ModeAll)),
+		BotAccessMode: strings.ToLower(mustEnv("BOT_ACCESS_MODE", AccessModePublic)),
+		AdminUserID:   mustInt64("ADMIN_USER_ID", 0),
+		DevPolling:    mustBool("DEV_POLLING", false),
 		Webhook: WebhookConfig{
 			ListenAddr:     mustEnv("WEBHOOK_LISTEN_ADDR", ":8080"),
 			PublicURL:      mustEnv("WEBHOOK_URL", ""),
@@ -144,6 +153,12 @@ func Load() (*Config, error) {
 
 	if cfg.BotToken == "" {
 		return nil, ErrMissingBotToken
+	}
+	if cfg.BotAccessMode != AccessModePublic && cfg.BotAccessMode != AccessModePrivate {
+		return nil, ErrInvalidAccessMode
+	}
+	if cfg.BotAccessMode == AccessModePrivate && cfg.AdminUserID <= 0 {
+		return nil, ErrMissingAdminUserID
 	}
 	if cfg.DB.DSN == "" {
 		return nil, ErrMissingDatabaseDSN
@@ -249,6 +264,18 @@ func mustInt(key string, def int) int {
 		return def
 	}
 	n, err := strconv.Atoi(v)
+	if err != nil {
+		return def
+	}
+	return n
+}
+
+func mustInt64(key string, def int64) int64 {
+	v := mustEnv(key, "")
+	if v == "" {
+		return def
+	}
+	n, err := strconv.ParseInt(v, 10, 64)
 	if err != nil {
 		return def
 	}

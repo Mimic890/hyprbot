@@ -12,15 +12,21 @@ import (
 )
 
 type Processor struct {
-	Base    ext.BaseProcessor
-	Dedupe  *queue.UpdateDeduplicator
-	Metrics *metrics.Metrics
-	Logger  zerolog.Logger
+	Base          ext.BaseProcessor
+	Dedupe        *queue.UpdateDeduplicator
+	Metrics       *metrics.Metrics
+	Logger        zerolog.Logger
+	AllowedUserID int64
 }
 
 func (p Processor) ProcessUpdate(d *ext.Dispatcher, b *gotgbot.Bot, ctx *ext.Context) error {
 	if p.Metrics != nil {
 		p.Metrics.UpdatesTotal.Inc()
+	}
+	if p.AllowedUserID > 0 {
+		if ctx.EffectiveUser == nil || ctx.EffectiveUser.Id != p.AllowedUserID {
+			return nil
+		}
 	}
 	if p.Dedupe != nil {
 		first, err := p.Dedupe.MarkFirst(context.Background(), ctx.UpdateId)

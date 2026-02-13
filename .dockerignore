@@ -1,0 +1,18 @@
+.git
+.gitignore
+.env
+.env.*
+*.log
+
+# Runtime-only data
+/data
+
+# Local build/test artifacts
+/bin
+/dist
+/coverage
+*.out
+
+# IDE
+.vscode
+.idea

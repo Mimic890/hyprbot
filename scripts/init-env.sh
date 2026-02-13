@@ -88,9 +88,13 @@ fi
 
 EXISTING_BOT_TOKEN=""
 EXISTING_WEBHOOK_URL=""
+EXISTING_BOT_ACCESS_MODE=""
+EXISTING_ADMIN_USER_ID=""
 if [[ -f "$OUT_FILE" ]]; then
   EXISTING_BOT_TOKEN="$(get_from_env_file "$OUT_FILE" "BOT_TOKEN")"
   EXISTING_WEBHOOK_URL="$(get_from_env_file "$OUT_FILE" "WEBHOOK_URL")"
+  EXISTING_BOT_ACCESS_MODE="$(get_from_env_file "$OUT_FILE" "BOT_ACCESS_MODE")"
+  EXISTING_ADMIN_USER_ID="$(get_from_env_file "$OUT_FILE" "ADMIN_USER_ID")"
   BACKUP_FILE="${OUT_FILE}.bak.$(date +%Y%m%d%H%M%S)"
   cp "$OUT_FILE" "$BACKUP_FILE"
   echo "backup created: $BACKUP_FILE"
@@ -106,6 +110,17 @@ if [[ -z "$WEBHOOK_URL" ]]; then
   WEBHOOK_URL="https://example.com"
 fi
 
+BOT_ACCESS_MODE="${EXISTING_BOT_ACCESS_MODE:-public}"
+case "$BOT_ACCESS_MODE" in
+  public|private) ;;
+  *) BOT_ACCESS_MODE="private" ;;
+esac
+
+ADMIN_USER_ID="${EXISTING_ADMIN_USER_ID:-0}"
+if ! [[ "$ADMIN_USER_ID" =~ ^[0-9]+$ ]]; then
+  ADMIN_USER_ID="0"
+fi
+
 POSTGRES_DB="hyprbot"
 POSTGRES_USER="postgres"
 POSTGRES_PASSWORD="$(rand_urlsafe 32 | cut -c1-24)"
@@ -119,6 +134,8 @@ mkdir -p data/postgres data/redis data/bot
 
 cat > "$OUT_FILE" <<ENV
 BOT_TOKEN=$BOT_TOKEN
+BOT_ACCESS_MODE=$BOT_ACCESS_MODE
+ADMIN_USER_ID=$ADMIN_USER_ID
 
 APP_MODE=ALL
 DEV_POLLING=true
@@ -152,6 +169,9 @@ ENV
 echo "generated: $OUT_FILE"
 if [[ "$BOT_TOKEN" == "123456:replace_me" ]]; then
   echo "next step: set BOT_TOKEN in $OUT_FILE"
+fi
+if [[ "$BOT_ACCESS_MODE" == "private" && "$ADMIN_USER_ID" == "0" ]]; then
+  echo "next step: set ADMIN_USER_ID in $OUT_FILE"
 fi
 echo "data dirs ready: data/postgres data/redis data/bot"
 echo "done"

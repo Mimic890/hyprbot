@@ -25,7 +25,13 @@ func Open(ctx context.Context, driver, dsn string, autoMigrate bool, migrationsD
 		return nil, fmt.Errorf("dsn is empty")
 	}
 
-	db, err := sql.Open(driver, dsn)
+	sqlDriver := driver
+	if driver == "postgres" {
+		// pgx stdlib registers itself under "pgx".
+		sqlDriver = "pgx"
+	}
+
+	db, err := sql.Open(sqlDriver, dsn)
 	if err != nil {
 		return nil, fmt.Errorf("open db: %w", err)
 	}

@@ -9,6 +9,7 @@ import (
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext/handlers"
+	"github.com/PaulSonOfLars/gotgbot/v2/ext/handlers/filters/callbackquery"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext/handlers/filters/message"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
@@ -30,6 +31,8 @@ type Service struct {
 	metrics       *metrics.Metrics
 	adminCacheTTL time.Duration
 	botUsername   string
+	accessMode    string
+	adminUserID   int64
 }
 
 type Config struct {
@@ -43,6 +46,8 @@ type Config struct {
 	AdminCacheTTL time.Duration
 	WizardTTL     time.Duration
 	BotUsername   string
+	AccessMode    string
+	AdminUserID   int64
 }
 
 func NewService(cfg Config) *Service {
@@ -67,12 +72,17 @@ func NewService(cfg Config) *Service {
 		metrics:       m,
 		adminCacheTTL: cfg.AdminCacheTTL,
 		botUsername:   cfg.BotUsername,
+		accessMode:    cfg.AccessMode,
+		adminUserID:   cfg.AdminUserID,
 	}
 }
 
 func (s *Service) Register(d *ext.Dispatcher) {
 	d.AddHandler(handlers.NewCommand("help", s.help))
 	d.AddHandler(handlers.NewCommand("start", s.start))
+	d.AddHandler(handlers.NewCommand("menu", s.menu))
+	d.AddHandler(handlers.NewCommand("setup", s.setup))
+	d.AddHandler(handlers.NewCommand("status", s.status))
 	d.AddHandler(handlers.NewCommand("cancel", s.cancelWizard))
 	d.AddHandler(handlers.NewCommand("ask", s.ask))
 	d.AddHandler(handlers.NewCommand("ai", s.ai))
@@ -83,6 +93,7 @@ func (s *Service) Register(d *ext.Dispatcher) {
 	d.AddHandler(handlers.NewCommand("llm_add", s.llmAdd))
 	d.AddHandler(handlers.NewCommand("llm_list", s.llmList))
 	d.AddHandler(handlers.NewCommand("llm_del", s.llmDel))
+	d.AddHandler(handlers.NewCallback(callbackquery.Prefix(cbPrefix), s.onCallback))
 	d.AddHandler(handlers.NewMessage(func(msg *gotgbot.Message) bool {
 		return message.Private(msg) && message.Text(msg)
 	}, s.privateText))
