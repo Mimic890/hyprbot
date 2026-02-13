@@ -1,6 +1,6 @@
 module hyprbot
 
-go 1.22
+go 1.25.6
 
 require (
 	github.com/Masterminds/squirrel v1.5.4

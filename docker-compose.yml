@@ -24,6 +24,8 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-info}
     ports:
       - "8080:8080"
+    networks:
+      - hyprbot
     depends_on:
       postgres:
         condition: service_healthy
@@ -37,8 +39,10 @@ services:
       POSTGRES_DB: hyprbot
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-    ports:
-      - "5432:5432"
+    expose:
+      - "5432"
+    networks:
+      - hyprbot
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -50,8 +54,10 @@ services:
 
   redis:
     image: redis:7
-    ports:
-      - "6379:6379"
+    expose:
+      - "6379"
+    networks:
+      - hyprbot
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -61,3 +67,8 @@ services:
 
 volumes:
   postgres_data:
+
+networks:
+  hyprbot:
+    name: hyprbot
+    driver: bridge

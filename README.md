@@ -1,6 +1,6 @@
 # hyprbot
 
-Production-ready Telegram bot in Go (1.22+) with horizontally scalable architecture:
+Production-ready Telegram bot in Go (1.25.6+) with horizontally scalable architecture:
 - ingress mode (`webhook`) accepts Telegram updates and **only enqueues jobs**
 - worker mode (`worker`) consumes Redis queue, calls LLM providers, replies to Telegram
 - combined mode (`all`) runs both in one process/container
@@ -133,6 +133,7 @@ docker compose up --build
 ```
 
 Default compose runs `APP_MODE=ALL` with Postgres + Redis.
+`postgres` and `redis` are available only inside Docker network `hyprbot` (no host port publishing).
 For quick local testing compose sets `DEV_POLLING=true` by default.
 Set `DEV_POLLING=false` + `WEBHOOK_URL` for real webhook flow.
 
