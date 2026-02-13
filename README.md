@@ -126,16 +126,27 @@ Health and metrics:
 ### docker-compose (dev)
 
 ```fish
-cp .env.example .env
-# edit BOT_TOKEN and MASTER_KEY_B64 in .env
+# auto-generate ready .env with valid secrets
+./scripts/init-env.sh
+# edit only BOT_TOKEN in .env
 
 docker compose up --build
 ```
 
 Default compose runs `APP_MODE=ALL` with Postgres + Redis.
 `postgres` and `redis` are available only inside Docker network `hyprbot` (no host port publishing).
+All runtime data is stored in `./data`:
+- `data/postgres`
+- `data/redis`
+- `data/bot`
 For quick local testing compose sets `DEV_POLLING=true` by default.
 Set `DEV_POLLING=false` + `WEBHOOK_URL` for real webhook flow.
+
+If `.env` already exists and you want to regenerate secrets:
+
+```fish
+./scripts/init-env.sh --force
+```
 
 ## Example: Add Grok (xAI) via OpenAI-compatible
 
